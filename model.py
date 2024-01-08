@@ -80,6 +80,7 @@ class PointNetClassifier(nn.Module):
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Linear(512, 256),
+            nn.Dropout(p=0.3),
             nn.BatchNorm1d(256),
             nn.ReLU(),
             nn.Linear(256, k),
