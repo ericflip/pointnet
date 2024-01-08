@@ -8,6 +8,10 @@ def create_classes_map(classes: list[str]):
     return {cls: i for i, cls in enumerate(classes)}
 
 
+def parse_off():
+    pass
+
+
 def point_cloud_from_off_file(path: str) -> torch.Tensor:
     with open(path, "r") as file:
         if "OFF" != file.readline().strip():
@@ -21,6 +25,15 @@ def point_cloud_from_off_file(path: str) -> torch.Tensor:
             list(map(float, file.readline().strip().split(" ")))
             for _ in range(n_vertices)
         ]
+
+        # Read faces
+        faces = [
+            list(map(int, file.readline().strip().split()))[1:] for _ in range(n_faces)
+        ]  # ignoring the first number which is vertex count in face
+
+        print(faces)
+
+        # normalize
 
         # return torch.tensor(vertices).view((3, -1))  # (3, # points)
         return torch.tensor(vertices)  # (# points, 3)
@@ -59,3 +72,14 @@ class Model10NetDataset(Dataset):
 
     def __len__(self):
         return len(self.objects)
+
+
+class SamplePointCloudDataset(Dataset):
+    def __init__(self):
+        pass
+
+    def __getitem__(self, index: int):
+        pass
+
+    def __len__(self):
+        pass

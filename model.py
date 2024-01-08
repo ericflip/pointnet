@@ -36,7 +36,7 @@ class PointNet(nn.Module):
         self.batchnorm2 = nn.BatchNorm1d(64)
         self.classifier = PointNetClassifier(k=k)
 
-    def max_pool(self, x: torch.Tensor):
+    def max_pool(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return x.max(dim=-1)[0]  # (N, 1024, P) -> # (N, 1024)
 
     def forward(self, x: torch.Tensor):
@@ -69,7 +69,7 @@ class PointNet(nn.Module):
         # classifier
         x = self.classifier(x)
 
-        return x, input_transform, feature_transform
+        return x, feature_transform
 
 
 class PointNetClassifier(nn.Module):

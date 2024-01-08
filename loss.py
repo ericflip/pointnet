@@ -19,7 +19,7 @@ class CrossEntropyWithFeatureRegularization(nn.Module):
         cross_entropy_loss = self.cross_entropy(pred, classes)
 
         # compute regularization loss
-        identity = torch.eye(N)
+        identity = torch.eye(N).to(pred.device)
         identity_minus_AAT = identity - torch.bmm(
             feature_transform, feature_transform.transpose(1, 2)
         )
