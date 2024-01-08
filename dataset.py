@@ -22,7 +22,8 @@ def point_cloud_from_off_file(path: str) -> torch.Tensor:
             for _ in range(n_vertices)
         ]
 
-        return torch.tensor(vertices).view((3, -1))  # (3, # points)
+        # return torch.tensor(vertices).view((3, -1))  # (3, # points)
+        return torch.tensor(vertices)  # (# points, 3)
 
 
 class Model10NetDataset(Dataset):

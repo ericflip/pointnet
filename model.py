@@ -40,6 +40,11 @@ class PointNet(nn.Module):
         return x.max(dim=-1)[0]  # (N, 1024, P) -> # (N, 1024)
 
     def forward(self, x: torch.Tensor):
+        """
+        Params:
+            - x: (N, 3, P) tensor where N is batch size and P is number of points
+        """
+
         # input transform
         input_transform = self.input_transform(x)  # (N, 3, P) -> (N, 3, 3)
         x = torch.bmm(input_transform, x)  # (N, 3, 3) x (N, 3, P) -> (N, 3, P)
