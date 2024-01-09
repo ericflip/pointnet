@@ -8,11 +8,7 @@ def create_classes_map(classes: list[str]):
     return {cls: i for i, cls in enumerate(classes)}
 
 
-def parse_off():
-    pass
-
-
-def point_cloud_from_off_file(path: str) -> torch.Tensor:
+def parse_off(path: str):
     with open(path, "r") as file:
         if "OFF" != file.readline().strip():
             raise ValueError("Not a valid OFF file")
@@ -31,12 +27,10 @@ def point_cloud_from_off_file(path: str) -> torch.Tensor:
             list(map(int, file.readline().strip().split()))[1:] for _ in range(n_faces)
         ]  # ignoring the first number which is vertex count in face
 
-        print(faces)
+        vertices = torch.tensor(vertices)
+        faces = torch.tensor(faces)
 
-        # normalize
-
-        # return torch.tensor(vertices).view((3, -1))  # (3, # points)
-        return torch.tensor(vertices)  # (# points, 3)
+        return vertices, faces
 
 
 class Model10NetDataset(Dataset):
@@ -64,9 +58,7 @@ class Model10NetDataset(Dataset):
 
     def __getitem__(self, index: int):
         object_path, class_idx = self.objects[index]
-        point_cloud = point_cloud_from_off_file(
-            object_path
-        )  # (N, 3) -> N = # of points
+        point_cloud = parse_off(object_path)
 
         return point_cloud, class_idx
 
@@ -74,12 +66,39 @@ class Model10NetDataset(Dataset):
         return len(self.objects)
 
 
+def area_of_faces(faces: torch.Tensor) -> torch.Tensor:
+    """
+    Calculates area of faces in a batch of point clouds using Heron's formula.
+    """
+
+    a, b, c = faces[:, 0, :], faces[:, 1, :], faces[:, 2, :]
+
+    s1 = torch.linalg.norm(a - b, dim=1)
+    s2 = torch.linalg.norm(a - c, dim=1)
+    s3 = torch.linalg.norm(b - c, dim=1)
+
+    s = (s1 + s2 + s3) / 2
+    area = torch.sqrt(s * (s - s1) * (s - s2) * (s - s3))
+
+    return area
+
+
 class SamplePointCloudDataset(Dataset):
-    def __init__(self):
-        pass
+    def __init__(self, dataset: Model10NetDataset):
+        super().__init__()
+        self.dataset = dataset
 
     def __getitem__(self, index: int):
-        pass
+        point_cloud, class_idx = self.dataset[index]
+        vertices, faces = point_cloud
+
+        faces_array = faces.view((-1))
+        points_on_faces = vertices[faces_array].view((-1, 3, 3))
+        areas = area_of_faces(points_on_faces)
+
+        # sample from mesh uniformly based on face area
+
+        # normalize into unit sphere [-1, 1]
 
     def __len__(self):
-        pass
+        return len(self.dataset)
