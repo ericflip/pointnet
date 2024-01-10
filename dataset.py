@@ -78,27 +78,41 @@ def area_of_faces(faces: torch.Tensor) -> torch.Tensor:
     s3 = torch.linalg.norm(b - c, dim=1)
 
     s = (s1 + s2 + s3) / 2
-    area = torch.sqrt(s * (s - s1) * (s - s2) * (s - s3))
+
+    w = (s * (s - s1) * (s - s2) * (s - s3)).clamp(
+        min=0
+    )  # we have degenerate triangles so we clamp w to min=0
+    area = torch.sqrt(w)
 
     return area
 
 
 class SamplePointCloudDataset(Dataset):
-    def __init__(self, dataset: Model10NetDataset):
+    def __init__(self, dataset: Model10NetDataset, k=1024):
+        """k - # of samples"""
         super().__init__()
         self.dataset = dataset
+        self.k = k
 
     def __getitem__(self, index: int):
         point_cloud, class_idx = self.dataset[index]
         vertices, faces = point_cloud
+
+        # normalize into unit sphere [-1, 1]
 
         faces_array = faces.view((-1))
         points_on_faces = vertices[faces_array].view((-1, 3, 3))
         areas = area_of_faces(points_on_faces)
 
         # sample from mesh uniformly based on face area
+        total_area = areas.sum()
 
-        # normalize into unit sphere [-1, 1]
+        # proportions
+        proportions = areas / total_area
+        num_samples = proportions * self.k
+
+        for i, num_sample in enumerate(num_samples):
+            pass
 
     def __len__(self):
         return len(self.dataset)
