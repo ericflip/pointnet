@@ -40,12 +40,12 @@ class Model10NetDataset(Dataset):
         self.train = train
 
         classes = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-        classes_map = create_classes_map(classes)
+        self.classes_map = create_classes_map(classes)
 
         # list of tuples (path_to_object, class_idx)
         self.objects = []
 
-        for cls, class_idx in classes_map.items():
+        for cls, class_idx in self.classes_map.items():
             split = "train" if train else "test"
             class_path = os.path.join(path, cls, split)
             objects = [
@@ -87,6 +87,26 @@ def area_of_faces(faces: torch.Tensor) -> torch.Tensor:
     return area
 
 
+def sample_from_face(vertices: torch.Tensor, k: int):
+    # Generate random numbers
+    r = torch.rand((k))
+    s = torch.rand((k))
+
+    # Ensure the points are inside the triangle
+    outside = r + s > 1
+    r[outside] = 1 - r[outside]
+    s[outside] = 1 - s[outside]
+
+    # Compute the points
+    A = vertices[0]
+    B = vertices[1]
+    C = vertices[2]
+
+    P = A + r.unsqueeze(1) * (B - A) + s.unsqueeze(1) * (C - A)
+
+    return P
+
+
 class SamplePointCloudDataset(Dataset):
     def __init__(self, dataset: Model10NetDataset, k=1024):
         """k - # of samples"""
@@ -94,14 +114,28 @@ class SamplePointCloudDataset(Dataset):
         self.dataset = dataset
         self.k = k
 
+    @property
+    def classes_map(self):
+        return self.dataset.classes_map
+
     def __getitem__(self, index: int):
         point_cloud, class_idx = self.dataset[index]
         vertices, faces = point_cloud
 
-        # normalize into unit sphere [-1, 1]
-
         faces_array = faces.view((-1))
         points_on_faces = vertices[faces_array].view((-1, 3, 3))
+
+        # normalize into unit sphere [-1, 1]
+        x = points_on_faces[:, :, 0]
+        points_on_faces[:, :, 0] = (x - x.mean()) / x.max()
+
+        y = points_on_faces[:, :, 1]
+        points_on_faces[:, :, 1] = (y - y.mean()) / y.max()
+
+        z = points_on_faces[:, :, 2]
+        points_on_faces[:, :, 2] = (z - z.mean()) / z.max()
+
+        # calculate area of faces
         areas = area_of_faces(points_on_faces)
 
         # sample from mesh uniformly based on face area
@@ -111,8 +145,27 @@ class SamplePointCloudDataset(Dataset):
         proportions = areas / total_area
         num_samples = proportions * self.k
 
+        curr = 0
+        sampled_points = []
+
         for i, num_sample in enumerate(num_samples):
-            pass
+            if curr == self.k:
+                break
+
+            num_points = int(num_sample.ceil().item())
+            face_vertices = points_on_faces[i]
+            samples = sample_from_face(face_vertices, k=num_points)
+
+            if curr + num_points <= self.k:
+                sampled_points.append(samples)
+            elif curr + num_points > self.k:
+                sampled_points.append(samples[: self.k - curr])
+
+            curr += num_points
+
+        sampled_points = torch.cat(sampled_points)
+
+        return sampled_points, class_idx
 
     def __len__(self):
         return len(self.dataset)
