@@ -149,19 +149,16 @@ class SamplePointCloudDataset(Dataset):
         sampled_points = []
 
         for i, num_sample in enumerate(num_samples):
-            if curr == self.k:
-                break
-
             num_points = int(num_sample.ceil().item())
             face_vertices = points_on_faces[i]
             samples = sample_from_face(face_vertices, k=num_points)
 
-            if curr + num_points <= self.k:
+            if curr + num_points < self.k:
                 sampled_points.append(samples)
-            elif curr + num_points > self.k:
+                curr += num_points
+            elif curr + num_points >= self.k:
                 sampled_points.append(samples[: self.k - curr])
-
-            curr += num_points
+                break
 
         sampled_points = torch.cat(sampled_points)
 
