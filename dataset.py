@@ -30,7 +30,9 @@ class Model10NetDataset(Dataset):
     CLASSES = CLASSES
     CLASSES_MAP = CLASSES_MAP
 
-    def __init__(self, path: str, k=1024, train=True, data_augmentation=False):
+    def __init__(
+        self, path: str, k=1024, train=True, random_jitter=False, random_rotation=False
+    ):
         """
         Params:
             - path: path of dataset
@@ -42,7 +44,8 @@ class Model10NetDataset(Dataset):
         self.path = path
         self.k = k
         self.train = train
-        self.data_augmentation = data_augmentation
+        self.random_jitter = random_jitter
+        self.random_rotation = random_rotation
 
         # list of tuples (path_to_object, class_idx)
         self.objects = []
@@ -83,29 +86,29 @@ class Model10NetDataset(Dataset):
     def apply_augmentation(self, points: torch.Tensor) -> torch.Tensor:
         """Apply random rotation to points and add gaussian jitter (mean=0, std=0.02)"""
 
-        # rotate
-        theta = torch.rand(1) * 2 * np.pi
-        rotation_matrix = torch.tensor(
-            [
-                [torch.cos(theta), -torch.sin(theta)],
-                [torch.sin(theta), torch.cos(theta)],
-            ]
-        )
+        if self.random_rotation:
+            # rotate
+            theta = torch.rand(1) * 2 * np.pi
+            rotation_matrix = torch.tensor(
+                [
+                    [torch.cos(theta), -torch.sin(theta)],
+                    [torch.sin(theta), torch.cos(theta)],
+                ]
+            )
 
-        points[:, [0, 2]] = torch.mm(points[:, [0, 2]], rotation_matrix)
+            points[:, [0, 2]] = torch.mm(points[:, [0, 2]], rotation_matrix)
 
-        # add gaussian noise with mean 0 and std 0.02
-        jitter = torch.randn(points.shape) * 0.02
-        points += jitter
+        if self.random_jitter:
+            # add gaussian noise with mean 0 and std 0.02
+            jitter = torch.randn(points.shape) * 0.02
+            points += jitter
 
         return points
 
     def __getitem__(self, index: int):
         object_path, class_idx = self.objects[index]
         sampled_points = Model10NetDataset.load_and_sample_point_cloud(object_path)
-
-        if self.data_augmentation:
-            sampled_points = self.apply_augmentation(sampled_points)
+        sampled_points = self.apply_augmentation(sampled_points)
 
         return sampled_points, class_idx
 

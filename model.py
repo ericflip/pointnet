@@ -25,11 +25,9 @@ class PointNet(nn.Module):
             nn.Conv1d(128, 1024, 1),
             nn.BatchNorm1d(1024),
         )
-        self.batchnorm1 = nn.BatchNorm1d(3)
-        self.batchnorm2 = nn.BatchNorm1d(64)
         self.classifier = PointNetClassifier(k=k)
 
-    def max_pool(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def max_pool(self, x: torch.Tensor) -> torch.Tensor:
         return x.max(dim=-1)[0]  # (N, 1024, P) -> # (N, 1024)
 
     def forward(self, x: torch.Tensor):
@@ -99,7 +97,7 @@ class TNet(nn.Module):
             nn.ReLU(),
             nn.Conv1d(128, 1024, 1),
             nn.BatchNorm1d(1024),
-            nn.ReLU(),
+            # nn.ReLU(),
         )
 
         self.fc = nn.Sequential(
@@ -111,8 +109,6 @@ class TNet(nn.Module):
             nn.ReLU(),
             nn.Linear(256, out_features=in_features**2),
         )
-
-        self.batchnorm = nn.BatchNorm1d(in_features)
 
     def max_pool(self, x: torch.Tensor):
         x = x.max(dim=-1)  # (N, F, C) -> (N, F) max pool across dim=1

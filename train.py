@@ -4,7 +4,6 @@ import os
 import torch
 from dataset import Model10NetDataset
 from model import PointNet
-from torch.utils.data import Subset
 from trainer import Model10NetPointNetTrainer
 
 if __name__ == "__main__":
@@ -25,6 +24,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint-path", type=str, default="./checkpoint", help="Path to checkpoint"
     )
+    parser.add_argument(
+        "--jitter-augmentation",
+        type=bool,
+        default=False,
+        help="Augment data with random jitter",
+    )
+    parser.add_argument(
+        "--rotation-augmentation",
+        type=bool,
+        default=False,
+        help="Add random rotation",
+    )
 
     # parse args
     args = parser.parse_args()
@@ -35,6 +46,8 @@ if __name__ == "__main__":
     checkpoint_path = args.checkpoint_path
     checkpoint_every = args.checkpoint_every
     evaluate_every = args.evaluate_every
+    jitter_augmentation = args.jitter_augmentation
+    rotation_augmentation = args.rotation_augmentation
 
     # create checkpoint dir
     os.makedirs(checkpoint_path, exist_ok=True)
@@ -45,9 +58,13 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = PointNet(k=10)
-    train_set = Model10NetDataset(dataset_path, train=True, data_augmentation=True)
-    # train_set = Subset(train_set, range(10))
-    test_set = Model10NetDataset(dataset_path, train=False, data_augmentation=True)
+    train_set = Model10NetDataset(
+        dataset_path,
+        train=True,
+        random_jitter=jitter_augmentation,
+        random_rotation=rotation_augmentation,
+    )
+    test_set = Model10NetDataset(dataset_path, train=False)
 
     # initialize trainer
     trainer = Model10NetPointNetTrainer(

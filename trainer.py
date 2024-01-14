@@ -35,7 +35,7 @@ class Model10NetPointNetTrainer:
         self.test_set = test_set
         self.train_loader = self.create_dataloader(train_set, batch_size=batch_size)
         self.test_loader = self.create_dataloader(
-            test_set, batch_size=batch_size, shuffle=False
+            test_set, batch_size=batch_size * 2, shuffle=False
         )
         self.optimizer = Adam(model.parameters(), lr=lr)
         self.scheduler = lr_scheduler.StepLR(
