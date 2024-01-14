@@ -34,12 +34,9 @@ class Model10NetPointNetTrainer:
         self.train_set = train_set = train_set
         self.test_set = test_set
         self.train_loader = self.create_dataloader(train_set, batch_size=batch_size)
-        self.test_loader = self.create_dataloader(
-            test_set, batch_size=batch_size * 2, shuffle=False
-        )
         self.optimizer = Adam(model.parameters(), lr=lr)
         self.scheduler = lr_scheduler.StepLR(
-            self.optimizer, step_size=20, gamma=0.5 ** (1 / 20)
+            self.optimizer, step_size=1, gamma=0.5 ** (1 / 20)
         )
         self.loss = CrossEntropyWithFeatureRegularization(weight=weight)
         self.batch_size = batch_size
@@ -120,4 +117,6 @@ class Model10NetPointNetTrainer:
         self.save_evals(os.path.join(self.checkpoint, "final-evals.pt"))
 
     def eval(self):
-        return eval_pointnet(self.model, self.test_set, self.device)
+        return eval_pointnet(
+            self.model, self.test_set, self.batch_size * 2, self.device
+        )

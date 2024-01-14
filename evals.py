@@ -6,9 +6,11 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 
-def eval_pointnet(model: PointNet, dataset: Model10NetDataset, device="cpu"):
+def eval_pointnet(
+    model: PointNet, dataset: Model10NetDataset, batch_size=32, device="cpu"
+):
     criterion = CrossEntropyWithFeatureRegularization()
-    dataloader = DataLoader(dataset, batch_size=32)
+    dataloader = DataLoader(dataset, batch_size=batch_size)
 
     model = model.to(device)
 
