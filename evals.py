@@ -37,7 +37,7 @@ def eval_pointnet(model: PointNet, dataset: Model10NetDataset, device="cpu"):
     accuracy = total_correct / len(dataset)
 
     diagonal = torch.diag(confusion_matrix)
-    predicted_totals = confusion_matrix.sum(dim=0)
+    predicted_totals = confusion_matrix.sum(dim=-1)
     class_accuracy = (diagonal / predicted_totals).nan_to_num(nan=0)
 
     return {

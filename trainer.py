@@ -38,7 +38,9 @@ class Model10NetPointNetTrainer:
             test_set, batch_size=batch_size, shuffle=False
         )
         self.optimizer = Adam(model.parameters(), lr=lr)
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=20, gamma=0.5)
+        self.scheduler = lr_scheduler.StepLR(
+            self.optimizer, step_size=20, gamma=0.5 ** (1 / 20)
+        )
         self.loss = CrossEntropyWithFeatureRegularization(weight=weight)
         self.batch_size = batch_size
         self.checkpoint = checkpoint
