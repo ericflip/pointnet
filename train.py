@@ -42,7 +42,7 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = PointNet(k=10)
     train_set = Model10NetDataset(dataset_path, train=True, data_augmentation=True)
-    train_set = Subset(train_set, range(10))
+    # train_set = Subset(train_set, range(10))
     test_set = Model10NetDataset(dataset_path, train=False, data_augmentation=True)
 
     # initialize trainer

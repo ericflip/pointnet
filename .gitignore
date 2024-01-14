@@ -163,4 +163,4 @@ cython_debug/
 ModelNet10
 
 # checkpoints
-checkpoint
+checkpoint*
