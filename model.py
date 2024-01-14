@@ -16,21 +16,14 @@ class PointNet(nn.Module):
             nn.Conv1d(3, 64, 1),
             nn.BatchNorm1d(64),
             nn.ReLU(),
-            nn.Conv1d(64, 64, 1),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
         )
         self.feature_transform = TNet(in_features=64)
         self.mlp2 = nn.Sequential(
-            nn.Conv1d(64, 64, 1),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
             nn.Conv1d(64, 128, 1),
             nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.Conv1d(128, 1024, 1),
             nn.BatchNorm1d(1024),
-            nn.ReLU(),
         )
         self.batchnorm1 = nn.BatchNorm1d(3)
         self.batchnorm2 = nn.BatchNorm1d(64)
@@ -48,7 +41,6 @@ class PointNet(nn.Module):
         # input transform
         input_transform = self.input_transform(x)  # (N, 3, P) -> (N, 3, 3)
         x = torch.bmm(input_transform, x)  # (N, 3, 3) x (N, 3, P) -> (N, 3, P)
-        x = F.relu(self.batchnorm1(x))
 
         # mlp
         x = self.mlp1(x)
@@ -56,7 +48,6 @@ class PointNet(nn.Module):
         # feature transform
         feature_transform = self.feature_transform(x)
         x = torch.bmm(feature_transform, x)  # (N, 64, 64) x (N, 64, P) -> (N, 64, P)
-        x = F.relu(self.batchnorm2(x))
 
         # mlp
         x = self.mlp2(x)
