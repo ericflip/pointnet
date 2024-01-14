@@ -66,7 +66,7 @@ class Model10NetDataset(Dataset):
             jitter = np.random.normal(loc=0, scale=0.02, size=sampled_points.shape)
             sampled_points += jitter
 
-        sampled_points = torch.from_numpy(sampled_points)
+        sampled_points = torch.from_numpy(sampled_points).to(torch.float32)
 
         return sampled_points, class_idx
 
