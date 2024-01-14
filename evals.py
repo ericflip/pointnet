@@ -15,13 +15,13 @@ def eval_pointnet(model: PointNet, dataset: Model10NetDataset, device="cpu"):
     total_correct = 0
 
     # confusion matrix
-    num_classes = len(dataset.classes_map)
+    num_classes = len(dataset.CLASSES)
 
     # axis=0 = actual, axis=1 = predicted
     confusion_matrix = torch.zeros((num_classes, num_classes), dtype=torch.int)
 
     with torch.no_grad():
-        for X, Y in tqdm(dataloader):
+        for X, Y in tqdm(dataloader, desc="[EVALS]"):
             X, Y = X.to(device), Y.to(device)
             X = X.permute((0, 2, 1))
 
@@ -38,10 +38,10 @@ def eval_pointnet(model: PointNet, dataset: Model10NetDataset, device="cpu"):
 
     diagonal = torch.diag(confusion_matrix)
     predicted_totals = confusion_matrix.sum(dim=0)
-    class_accuracy = diagonal / predicted_totals
+    class_accuracy = (diagonal / predicted_totals).nan_to_num(nan=0)
 
     return {
         "accuracy": accuracy,
-        "confusion_matrix": confusion_matrix,
-        "class_accuracy": class_accuracy,
+        "confusion_matrix": confusion_matrix.tolist(),
+        "class_accuracy": class_accuracy.tolist(),
     }
