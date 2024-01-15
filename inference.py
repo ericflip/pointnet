@@ -7,14 +7,21 @@ from model import PointNet
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run inference with pointnet")
+    parser.add_argument("--checkpoint-path", type=str, help="Path to checkpoint")
     parser.add_argument("--obj-path", type=str, help="Path to .off file")
     args = parser.parse_args()
     file_path = args.obj_path
+    checkpoint_path = args.checkpoint_path
 
     # parse .off file
     points = Model10NetDataset.load_and_sample_point_cloud(file_path)
 
+    # load weights
+    checkpoint = torch.load(checkpoint_path)
+    weights = checkpoint["weights"]
+
     model = PointNet()
+    model.load_state_dict(weights)
 
     points = points.permute((1, 0)).unsqueeze(0)
 
